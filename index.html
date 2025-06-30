@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ambulans Takip Sistemi</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f7fa; }
+    h2, h3 { color: #005577; }
+    input, select, button {
+      padding: 8px;
+      margin: 5px 0 15px 0;
+      width: 100%;
+      max-width: 320px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007acc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005f99;
+    }
+    .hidden { display: none; }
+    .section { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; max-width: 600px; }
+    ul { list-style: none; padding-left: 0; }
+    ul li { padding: 4px 0; }
+    label { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Ambulans Takip Sistemi - Giriş</h2>
+  <form onsubmit="login(event)">
+    <label>Email:</label>
+    <input type="email" id="email" required />
+    <label>Şifre:</label>
+    <input type="password" id="password" required />
+    <button type="submit">Giriş</button>
+  </form>
+  <p id="loginStatus" style="color:red;"></p>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel" class="hidden">
+    <h3>Admin Paneli</h3>
+    <div class="section">
+      <h4>Kullanıcı Ekle</h4>
+      <input id="newUserEmail" placeholder="Email" />
+      <input id="newUserPassword" placeholder="Şifre" />
+      <select id="newUserRole">
+        <option value="surucu">Sürücü</option>
+        <option value="saglik">Sağlık Personeli</option>
+      </select>
+      <button type="button" onclick="addUser()">Ekle</button>
+      <h4>Mevcut Kullanıcılar</h4>
+      <ul id="userList"></ul>
+    </div>
+  </div>
+
+  <!-- Sürücü Paneli -->
+  <div id="surucuPanel" class="hidden section">
+    <h3>Günlük Mekanik Kontrol</h3>
+    <label>Plaka:</label>
+    <select id="plakaSelectSurucu"></select>
+
+    <label>Yağ Seviyesi:</label>
+    <select id="yagSeviyesi">
+      <option>Sorunsuz</option>
+      <option>Sorunlu</option>
+      <option>Değiştirildi</option>
+    </select>
+
+    <label>Fren Sistemi:</label>
+    <select id="frenSistemi">
+      <option>Sorunsuz</option>
+      <option>Sorunlu</option>
+      <option>Değiştirildi</option>
+    </select>
+
+    <label>Lastikler:</label>
+    <select id="lastikDurumu">
+      <option>Sağlam</option>
+      <option>Arızalı</option>
+      <option>Havasız</option>
+    </select>
+
+    <button type="button" onclick="saveSurucuForm()">Kaydet</button>
+  </div>
+
+  <!-- Sağlık Personeli Paneli -->
+  <div id="saglikPanel" class="hidden section">
+    <h3>Haftalık İlaç/Sarf Malzeme Sayımı</h3>
+    <label>Plaka:</label>
+    <select id="plakaSelectSaglik"></select>
+
+    <label>Adrenalin (Gereken: 20):</label>
+    <input type="number" id="adrenalin" placeholder="Mevcut miktar" min="0" />
+
+    <label>Atropin (Gereken: 6):</label>
+    <input type="number" id="atropin" placeholder="Mevcut miktar" min="0" />
+
+    <label>Defibrilatör:</label>
+    <select id="defibrilatorDurumu">
+      <option>Var</option>
+      <option>Yok</option>
+      <option>Bozuk</option>
+    </select>
+
+    <button type="button" onclick="saveSaglikForm()">Kaydet</button>
+  </div>
+
+<script>
+  // Kullanıcılar başlangıçta
+  const users = [
+    { email: "admin@firma.com", password: "admin123", role: "admin" },
+    { email: "surucu@firma.com", password: "1234", role: "surucu" },
+    { email: "saglik@firma.com", password: "1234", role: "saglik" }
+  ];
+
+  // Araçlar başlangıçta
+  const araclar = ["34 ABC 123", "34 DEF 456"];
+
+  // Giriş fonksiyonu
+  function login(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const user = users.find(u => u.email === email && u.password === password);
+
+    const status = document.getElementById("loginStatus");
+    if (!user) {
+      status.textContent = "Giriş başarısız!";
+      hideAllPanels();
+      return;
+    }
+
+    status.textContent = `Giriş başarılı (${user.role})`;
+    document.querySelector("form").classList.add("hidden");
+
+    if(user.role === "admin") {
+      showAdminPanel();
+    } else if(user.role === "surucu") {
+      showSurucuPanel();
+    } else if(user.role === "saglik") {
+      showSaglikPanel();
+    }
+  }
+
+  function hideAllPanels() {
+    document.getElementById("adminPanel").classList.add("hidden");
+    document.getElementById("surucuPanel").classList.add("hidden");
+    document.getElementById("saglikPanel").classList.add("hidden");
+  }
+
+  function showAdminPanel() {
+    document.getElementById("adminPanel").classList.remove("hidden");
+    updateUserList();
+  }
+
+  function showSurucuPanel() {
+    document.getElementById("surucuPanel").classList.remove("hidden");
+    populateAracSelect("plakaSelectSurucu");
+  }
+
+  function showSaglikPanel() {
+    document.getElementById("saglikPanel").classList.remove("hidden");
+    populateAracSelect("plakaSelectSaglik");
+  }
+
+  // Kullanıcı ekleme fonksiyonu
+  function addUser() {
+    const email = document.getElementById("newUserEmail").value.trim();
+    const password = document.getElementById("newUserPassword").value.trim();
+    const role = document.getElementById("newUserRole").value;
+    if (!email || !password) {
+      alert("Email ve şifre boş olamaz!");
+      return;
+    }
+    if(users.some(u => u.email === email)) {
+      alert("Bu email zaten kayıtlı!");
+      return;
+    }
+    users.push({ email, password, role });
+    alert("Kullanıcı eklendi!");
+    updateUserList();
+    document.getElementById("newUserEmail").value = "";
+    document.getElementById("newUserPassword").value = "";
+  }
+
+  // Kullanıcı listesini güncelle
+  function updateUserList() {
+    const ul = document.getElementById("userList");
+    ul.innerHTML = "";
+    users.forEach(u => {
+      const li = document.createElement("li");
+      li.textContent = `${u.email} (${u.role})`;
+      ul.appendChild(li);
+    });
+  }
+
+  // Araç seçme dropdownlarını doldur
+  function populateAracSelect(selectId) {
+    const select = document.getElementById(selectId);
+    select.innerHTML = "";
+    araclar.forEach(a => {
+      const opt = document.createElement("option");
+      opt.value = a;
+      opt.textContent = a;
+      select.appendChild(opt);
+    });
+  }
+
+  // Sürücü form kaydetme (demo: sadece alert)
+  function saveSurucuForm() {
+    const plaka = document.getElementById("plakaSelectSurucu").value;
+    const yag = document.getElementById("yagSeviyesi").value;
+    const fren = document.getElementById("frenSistemi").value;
+    const lastik = document.getElementById("lastikDurumu").value;
+    alert(`Mekanik Kontrol Kaydedildi:\nAraç: ${plaka}\nYağ: ${yag}\nFren: ${fren}\nLastik: ${lastik}`);
+  }
+
+  // Sağlık personeli form kaydetme (demo: sadece alert)
+  function saveSaglikForm() {
+    const plaka = document.getElementById("plakaSelectSaglik").value;
+    const adrenalin = document.getElementById("adrenalin").value;
+    const atropin = document.getElementById("atropin").value;
+    const defibrilator = document.getElementById("defibrilatorDurumu").value;
+    alert(`İlaç/Sarf Sayımı Kaydedildi:\nAraç: ${plaka}\nAdrenalin: ${adrenalin}\nAtropin: ${atropin}\nDefibrilatör: ${defibrilator}`);
+  }
+</script>
+</body>
+</html>
