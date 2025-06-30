@@ -58,7 +58,31 @@
       <ul id="userList"></ul>
     </div>
   </div>
+<div id="adminPanel" class="hidden">
+  <h3>Admin Paneli</h3>
 
+  <div class="section">
+    <h4>Kullanıcı Ekle</h4>
+    <input id="newUserEmail" placeholder="Email" />
+    <input id="newUserPassword" placeholder="Şifre" />
+    <select id="newUserRole">
+      <option value="surucu">Sürücü</option>
+      <option value="saglik">Sağlık Personeli</option>
+    </select>
+    <button type="button" onclick="addUser()">Ekle</button>
+
+    <h4>Mevcut Kullanıcılar</h4>
+    <ul id="userList"></ul>
+  </div>
+<div class="section">
+    <h4>Araç Ekle</h4>
+    <input id="newAracPlaka" placeholder="Araç Plakası" />
+    <button type="button" onclick="addArac()">Ekle</button>
+
+    <h4>Mevcut Araçlar</h4>
+    <ul id="aracList"></ul>
+  </div>
+</div>
   <!-- Sürücü Paneli -->
   <div id="surucuPanel" class="hidden section">
     <h3>Günlük Mekanik Kontrol</h3>
